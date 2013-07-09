@@ -19,6 +19,7 @@ Examples
     TODO
     
 ### Matlab example (signle threaded)   
+Besides those "main_run_files_xxx.m" in directory "./matlab/", we offer a simple example here:
     %% prepare train/test data. 
     % 3-class classification. Features are 2 dimensional. 
     % 6 training examples and 3 testing examples. 
