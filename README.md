@@ -3,8 +3,18 @@ AOSOLogitBoost
 
 Codes for the the so-called AOSO-LogitBoost, which is an up-to-date (yet state-of-the-art, probably ) implementation of Friedman's LogitBoost for multi-class classification. Once you decide that LogitBoost is suitable to your classification problem, just try this AOSO-LogitBoost which typically has lower classification error and faster convergence rate than original LogitBoost. 
 
-Codes are in C++, with interfaces in other languages (say, Matlab).
+Features
+--------
+* C++ source codes, with interfaces in other languages (say, Matlab).
+* Multi threaded implementation (depending on tbb)
 
+Dependencies
+------------
+Opencv, which itself depending on tbb when using multi threaded features.
+
+
+Examples
+--------
 ### C++ example
     TODO
     
