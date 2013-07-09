@@ -18,7 +18,7 @@ Examples
 ### C++ example
     TODO
     
-### Matlab example    
+### Matlab example (signle threaded)   
     %% prepare train/test data. 
     % 3-class classification. Features are 2 dimensional. 
     % 6 training examples and 3 testing examples. 
@@ -91,6 +91,9 @@ Examples
     [~,yy] = max(F); 
     yy = yy - 1; % index should be 0-base 
     err_rate = sum(yy~=Yte)/length(Yte) 
+
+### Matlab example (multiple threaded)
+Just replace the  class "AOSOLogitBoost" in last example with "pAOSOLogitBoost", where the leading "p" is for parallel. 
 
 References
 ----------
