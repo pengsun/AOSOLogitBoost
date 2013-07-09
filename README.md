@@ -92,6 +92,7 @@ Examples
     yy = yy - 1; % index should be 0-base 
     err_rate = sum(yy~=Yte)/length(Yte) 
 
-### References
+References
+----------
 Those who are interested in algorithm's details are referred to the paper:
 "Peng Sun, Mark D. Reid, Jie Zhou. "AOSO-LogitBoost: Adaptive One-Vs-One LogitBoost for Multi-Class Problems", International Conference on Machine Learning (ICML 2012)"
