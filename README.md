@@ -1,2 +1,4 @@
 AOSOLogitBoost
 ==============
+
+TODO: general introduction
