@@ -1,0 +1,44 @@
+-------------
+dataset: M-Noise3 
+average depth: 10.0658 
+average avr-depth: 6.8539 
+
+-------------
+dataset: M-Noise4 
+average depth: 9.9549 
+average avr-depth: 6.7952 
+
+-------------
+dataset: M-Noise5 
+average depth: 9.7486 
+average avr-depth: 6.7140 
+
+-------------
+dataset: M-Noise6 
+average depth: 9.3990 
+average avr-depth: 6.5429 
+
+-------------
+dataset: M-Rotate 
+average depth: 10.0102 
+average avr-depth: 6.9127 
+
+-------------
+dataset: pendigits 
+average depth: 9.1214 
+average avr-depth: 6.3867 
+
+-------------
+dataset: poker100k 
+average depth: 11.0742 
+average avr-depth: 7.7718 
+
+-------------
+dataset: zipcode 
+average depth: 8.7649 
+average avr-depth: 6.2621 
+
+-------------
+dataset: isolet 
+average depth: 9.2224 
+average avr-depth: 6.4785 
