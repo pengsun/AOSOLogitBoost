@@ -3,6 +3,12 @@
 using namespace std;
 using namespace cv;
 
+#define DBG
+#ifdef DBG
+#include <fstream>
+std::ofstream ofs("output.txt");
+#endif
+
 // Implementation of AOSOSplitgain
 AOSOSplitgain::AOSOSplitgain()
 {
@@ -402,6 +408,23 @@ bool AOSOTree::find_best_split_num_var(
   MLData* data_cls = _data->data_cls_;
   make_node_sorted_idx(_node,data_cls,_ivar,node_sample_si);
   int ns = node_sample_si.size();
+
+#ifdef DBG
+  if (ns < 1) {
+    ofs << "ns = " << ns << endl;
+
+    ofs << "node_sample_si.size() = " << node_sample_si.size() << endl;
+    
+    ofs << "node_sample_si ";
+    for (int i = 0; i < node_sample_si.size(); ++i) {
+      ofs << _node->sample_idx_[i] << " ";
+    }
+    ofs << endl;
+
+    ofs << "node id = " << _node->id_ << endl;
+    
+  }
+#endif
   CV_Assert(ns >= 1);
 
   // initialize
