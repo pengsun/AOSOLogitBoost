@@ -5,8 +5,7 @@ Codes for the the so-called AOSO-LogitBoost, which is an up-to-date (yet state-o
 
 Features
 --------
-* C++ source codes
-  ** Interfaces in Matlab
+* C++ source codes, wiht interfaces in Matlab
 * Multi threaded implementation (depending on tbb)
 * Training speedup by subsampling instances/features (mature best-practice) is supported
 
