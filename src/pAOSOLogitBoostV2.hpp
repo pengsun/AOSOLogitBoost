@@ -13,7 +13,7 @@ typedef std::vector<int> VecInt;
 typedef std::vector<double> VecDbl;
 
 // data shared by tree and booster
-struct pVbExtSamp13AOSOVTData {
+struct pAOSO2Data {
   MLData* data_cls_;
   cv::Mat_<double> *p_; // #samples * #class
   cv::Mat_<double> *L_; // #samples * 1
@@ -21,13 +21,13 @@ struct pVbExtSamp13AOSOVTData {
 };
 
 // Solver
-struct pVbExtSamp13AOSOVTSolver {
+struct pAOSO2Solver {
   static const double MAXGAMMA;
   //static const double EPS;
 
-  pVbExtSamp13AOSOVTSolver () {};
-  pVbExtSamp13AOSOVTSolver (pVbExtSamp13AOSOVTData* _data, VecIdx* _ci);
-  void set_data (pVbExtSamp13AOSOVTData* _data, VecIdx* _ci);
+  pAOSO2Solver () {};
+  pAOSO2Solver (pAOSO2Data* _data, VecIdx* _ci);
+  void set_data (pAOSO2Data* _data, VecIdx* _ci);
 
   void update_internal (VecIdx& vidx);
   void update_internal_incre (int idx);
@@ -39,14 +39,14 @@ struct pVbExtSamp13AOSOVTSolver {
 public:
   std::vector<double> mg_, h_;
   double hh_;
-  pVbExtSamp13AOSOVTData* data_;
+  pAOSO2Data* data_;
   VecIdx *ci_;
 };
 
 // Split descriptor
-struct pVbExtSamp13AOSOVTSplit {
+struct pAOSO2Split {
 public:
-  pVbExtSamp13AOSOVTSplit ();
+  pAOSO2Split ();
   void reset ();
 
   int var_idx_; // variable for split
@@ -61,10 +61,10 @@ public:
 };
 
 // AOSO Node. Vector value
-struct pVbExtSamp13AOSOVTNode {
+struct pAOSO2Node {
 public:
-  pVbExtSamp13AOSOVTNode (int _K);
-  pVbExtSamp13AOSOVTNode (int _id, int _K);
+  pAOSO2Node (int _K);
+  pAOSO2Node (int _id, int _K);
   // to which side should the sample be sent. -1:left, +1:right
   int calc_dir (float* _psample);
 
@@ -72,52 +72,52 @@ public:
   std::vector<double> fitvals_;
 
   int id_; // node ID. 0 for root node
-  pVbExtSamp13AOSOVTNode *parent_, *left_, *right_; //
-  pVbExtSamp13AOSOVTSplit split_;
+  pAOSO2Node *parent_, *left_, *right_; //
+  pAOSO2Split split_;
 
   VecIdx sample_idx_; // for all the examples this node holds
   VecIdx sub_ci_; // subclass set
-  pVbExtSamp13AOSOVTSolver sol_this_; // for all the examples this node holds
+  pAOSO2Solver sol_this_; // for all the examples this node holds
 };
 
 // Node Comparator: the less the expected gain, the less the node
-struct pVbExtSamp13AOSOVTNodeLess {
-  bool operator () (const pVbExtSamp13AOSOVTNode* n1, const pVbExtSamp13AOSOVTNode* n2) {
+struct pAOSO2NodeLess {
+  bool operator () (const pAOSO2Node* n1, const pAOSO2Node* n2) {
     return n1->split_.expected_gain_ < 
       n2->split_.expected_gain_;
   }
 };
 
 // Priority queue for node
-typedef std::priority_queue<pVbExtSamp13AOSOVTNode*, 
-std::vector<pVbExtSamp13AOSOVTNode*>, 
-pVbExtSamp13AOSOVTNodeLess>
-QuepVbExtSamp13AOSOVTNode;
+typedef std::priority_queue<pAOSO2Node*, 
+                            std::vector<pAOSO2Node*>, 
+                            pAOSO2NodeLess>
+        QuepAOSO2Node;
 
 // Best Split Finder (helper class for parallel_reduce) 
-class pVbExtSamp13AOSOVTTree;
-struct pVbExt13VT_best_split_finder {
-  pVbExt13VT_best_split_finder (pVbExtSamp13AOSOVTTree *_tree, 
-    pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data); // customized data
-  pVbExt13VT_best_split_finder (const pVbExt13VT_best_split_finder &f, cv::Split); // required
+class pAOSO2Tree;
+struct pAOSO2_best_split_finder {
+  pAOSO2_best_split_finder (pAOSO2Tree *_tree, 
+    pAOSO2Node* _node, pAOSO2Data* _data); // customized data
+  pAOSO2_best_split_finder (const pAOSO2_best_split_finder &f, cv::Split); // required
 
   void operator () (const cv::BlockedRange &r); // required
-  void join (pVbExt13VT_best_split_finder &rhs); // required
+  void join (pAOSO2_best_split_finder &rhs); // required
 
-  pVbExtSamp13AOSOVTTree *tree_;
-  pVbExtSamp13AOSOVTNode *node_;
-  pVbExtSamp13AOSOVTData *data_;
-  pVbExtSamp13AOSOVTSplit cb_split_;
+  pAOSO2Tree *tree_;
+  pAOSO2Node *node_;
+  pAOSO2Data *data_;
+  pAOSO2Split cb_split_;
 };
 
 // Tree
-class pVbExtSamp13AOSOVTTree {
+class pAOSO2Tree {
 public:
   struct Param {
     int max_leaves_; // maximum leaves (terminal nodes)
     int node_size_;   // minimum sample size in leaf
-    double ratio_si_, ratio_fi_, ratio_ci_;
-    double weight_ratio_si_, weight_ratio_ci_; 
+    double ratio_si_, ratio_fi_;
+    double weight_ratio_si_; 
     Param ();
   };
   Param param_;
@@ -131,49 +131,49 @@ public:
   VecInt node_sc_; // sample count for each node
 
 public:
-  void split( pVbExtSamp13AOSOVTData* _data );
-  void fit ( pVbExtSamp13AOSOVTData* _data );
+  void split( pAOSO2Data* _data );
+  void fit ( pAOSO2Data* _data );
 
-  pVbExtSamp13AOSOVTNode* get_node (float* _sample);
+  pAOSO2Node* get_node (float* _sample);
   void get_is_leaf (VecInt& is_leaf);
   void predict (MLData* _data);
   void predict (float* _sample, float* _score);
 
 public:
-  void subsample_samples (pVbExtSamp13AOSOVTData* _data);
-  void subsample_classes_for_node (pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data);
+  void subsample_samples (pAOSO2Data* _data);
+  void subsample_classes_for_node (pAOSO2Node* _node, pAOSO2Data* _data);
 
   void clear ();
-  void creat_root_node (pVbExtSamp13AOSOVTData* _data);
+  void creat_root_node (pAOSO2Data* _data);
 
-  virtual bool find_best_candidate_split (pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data);
-  virtual bool find_best_split_num_var (pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data, int _ivar,
-    pVbExtSamp13AOSOVTSplit &spl);
+  virtual bool find_best_candidate_split (pAOSO2Node* _node, pAOSO2Data* _data);
+  virtual bool find_best_split_num_var (pAOSO2Node* _node, pAOSO2Data* _data, int _ivar,
+    pAOSO2Split &spl);
 
-  void make_node_sorted_idx(pVbExtSamp13AOSOVTNode* _node, MLData* _data, int _ivar, VecIdx& sorted_idx_node);
-  bool set_best_split_num_var ( pVbExtSamp13AOSOVTNode* _node, MLData* _data, int _ivar, 
+  void make_node_sorted_idx(pAOSO2Node* _node, MLData* _data, int _ivar, VecIdx& sorted_idx_node);
+  bool set_best_split_num_var ( pAOSO2Node* _node, MLData* _data, int _ivar, 
     VecIdx& node_sample_si,
     int best_i, double best_gain, double best_gain_left, double best_gain_right,
-    pVbExtSamp13AOSOVTSplit &cb_split);
+    pAOSO2Split &cb_split);
 
-  bool can_split_node (pVbExtSamp13AOSOVTNode* _node);
-  bool split_node (pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data);
-  void calc_gain (pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data);
-  virtual void fit_node (pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data);
+  bool can_split_node (pAOSO2Node* _node);
+  bool split_node (pAOSO2Node* _node, pAOSO2Data* _data);
+  void calc_gain (pAOSO2Node* _node, pAOSO2Data* _data);
+  virtual void fit_node (pAOSO2Node* _node, pAOSO2Data* _data);
 
 protected:
-  std::list<pVbExtSamp13AOSOVTNode> nodes_; // all nodes
-  QuepVbExtSamp13AOSOVTNode candidate_nodes_; // priority queue of candidate leaves for splitting
+  std::list<pAOSO2Node> nodes_; // all nodes
+  QuepAOSO2Node candidate_nodes_; // priority queue of candidate leaves for splitting
   // cb: current best
   // caching internal data, used by find_best_split*
   int K_; // #classes
 };
 
-// vector of pVbExtSamp13AOSOVTTree
-typedef std::vector<pVbExtSamp13AOSOVTTree> VecpVbExtSamp13AOSOVTTree;
+// vector of pAOSO2Tree
+typedef std::vector<pAOSO2Tree> VecpAOSO2Tree;
 
 // Boost
-class pVbExtSamp13AOSOVTLogitBoost {
+class pAOSOLogitBoostV2 {
 public:
   static const double EPS_LOSS;
   static const double MAX_F;
@@ -184,8 +184,8 @@ public:
     double v;  // shrinkage
     int J;     // #terminal nodes
     int ns;    // node size
-    double ratio_si_, ratio_fi_, ratio_ci_; // ratios for subsampling
-    double weight_ratio_si_, weight_ratio_ci_; // weight ratios for subsampling
+    double ratio_si_, ratio_fi_; // ratios for subsampling
+    double weight_ratio_si_; // weight ratios for subsampling
     Param ();
   };
   Param param_;
@@ -235,8 +235,8 @@ protected:
   cv::Mat_<double> gg_; // gradient. #samples * #classes
 
   int NumIter_; // actual iteration number
-  pVbExtSamp13AOSOVTData logitdata_;
-  VecpVbExtSamp13AOSOVTTree trees_;
+  pAOSO2Data logitdata_;
+  VecpAOSO2Tree trees_;
 
   int Tpre_beg_; // Beginning tree for test data
   cv::Mat_<double> Fpre_; // Score for test data. #samples * #class

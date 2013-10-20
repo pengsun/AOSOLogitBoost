@@ -19,7 +19,7 @@ Examples
     TODO
     
 ### Matlab example (signle threaded)   
-Besides those "main_run_files_xxx.m" in directory "./matlab/", we offer a simple example here:
+Besides the script files in directory "./matlab/run_script", we offer a simple example here:
 
 
     %% prepare train/test data. 

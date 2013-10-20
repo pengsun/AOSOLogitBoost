@@ -1,4 +1,4 @@
-#include "pVbExtSamp13AOSOVTLogitBoost.hpp"
+#include "pAOSOLogitBoostV2.hpp"
 #include <functional>
 #include <numeric>
 
@@ -136,13 +136,13 @@ namespace {
   }
 }
 
-// Implementation of pVbExtSamp13AOSOVTSplit
-pVbExtSamp13AOSOVTSplit::pVbExtSamp13AOSOVTSplit()
+// Implementation of pAOSO2Split
+pAOSO2Split::pAOSO2Split()
 {
   reset();
 }
 
-void pVbExtSamp13AOSOVTSplit::reset()
+void pAOSO2Split::reset()
 {
   var_idx_ = -1;
   threshold_ = FLT_MAX;
@@ -154,15 +154,15 @@ void pVbExtSamp13AOSOVTSplit::reset()
 }
 
 
-// Implementation of pVbExtSamp13AOSOVTSolver
-//const double pVbExtSamp13AOSOVTSolver::EPS = 0.01;
-const double pVbExtSamp13AOSOVTSolver::MAXGAMMA = 5.0;
-pVbExtSamp13AOSOVTSolver::pVbExtSamp13AOSOVTSolver( pVbExtSamp13AOSOVTData* _data, VecIdx* _ci)
+// Implementation of pAOSO2Solver
+//const double pAOSO2Solver::EPS = 0.01;
+const double pAOSO2Solver::MAXGAMMA = 5.0;
+pAOSO2Solver::pAOSO2Solver( pAOSO2Data* _data, VecIdx* _ci)
 { 
   set_data(_data, _ci);
 }
 
-void pVbExtSamp13AOSOVTSolver::set_data( pVbExtSamp13AOSOVTData* _data, VecIdx* _ci)
+void pAOSO2Solver::set_data( pAOSO2Data* _data, VecIdx* _ci)
 { 
   data_ = _data;
   ci_ = _ci;
@@ -175,7 +175,7 @@ void pVbExtSamp13AOSOVTSolver::set_data( pVbExtSamp13AOSOVTData* _data, VecIdx* 
   hh_ = 0.0;
 }
 
-void pVbExtSamp13AOSOVTSolver::update_internal( VecIdx& vidx )
+void pAOSO2Solver::update_internal( VecIdx& vidx )
 {
   for (VecIdx::iterator it = vidx.begin(); it!=vidx.end(); ++it  ) {
     int idx = *it;
@@ -183,7 +183,7 @@ void pVbExtSamp13AOSOVTSolver::update_internal( VecIdx& vidx )
   } // for it
 }
 
-void pVbExtSamp13AOSOVTSolver::update_internal_incre( int idx )
+void pAOSO2Solver::update_internal_incre( int idx )
 {
   int yi = int( data_->data_cls_->Y.at<float>(idx) );
   double* ptr_pi = data_->p_->ptr<double>(idx);
@@ -209,62 +209,69 @@ void pVbExtSamp13AOSOVTSolver::update_internal_incre( int idx )
   
 }
 
-void pVbExtSamp13AOSOVTSolver::update_internal_decre( int idx )
+void pAOSO2Solver::update_internal_decre( int idx )
 {
   int yi = int( data_->data_cls_->Y.at<float>(idx) );
   double* ptr_pi = data_->p_->ptr<double>(idx);
 
-  // mg and h
-  int KK = mg_.size();
-  for (int kk = 0; kk < KK; ++kk) {
-    int k = this->ci_->at(kk);
-    double pik = *(ptr_pi + k);
+  // the first class
+  int k1 = this->ci_->at(0);
+  double p1 = *(ptr_pi + k1);
 
-    if (yi==k) mg_[kk] -= (1-pik);
-    else       mg_[kk] -= (-pik);
+  if (yi==k1) mg_[0] -= (1-p1);
+  else        mg_[0] -= (-p1);
+  h_[0] -= p1*(1-p1);
 
-    h_[kk] -= pik*(1-pik);
-  }
+  // the second class
+  int k2 = this->ci_->at(1);
+  double p2 = *(ptr_pi + k2);
+
+  if (yi==k2) mg_[1] -= (1-p2);
+  else        mg_[1] -= (-p2);
+  h_[1] -= p2*(1-p2);
+
+  // cross
+  hh_ -= p1*p2;
 }
 
-void pVbExtSamp13AOSOVTSolver::calc_gamma( double *gamma)
+void pAOSO2Solver::calc_gamma( double *gamma)
 {
-  int KK = mg_.size();
-  for (int kk = 0; kk < KK; ++kk) {
-    double smg = mg_[kk];
-    double sh  = h_[kk];
-    //if (sh <= 0) cv::error("pVbExtSamp13AOSOVTSolver::calc_gamma: Invalid Hessian.");
-    if (sh == 0) sh = 1;
+  // calculate the scalar
+  double mg1 = mg_[0], mg2 = mg_[1];
+  double h1 = h_[0], h2 = h_[1];
 
-    double sgamma = smg/sh;
-    double cap = sgamma;
-    if (cap<-MAXGAMMA) cap = -MAXGAMMA;
-    else if (cap>MAXGAMMA) cap = MAXGAMMA;
+  double mg = mg1-mg2;
+  double h = h1 + h2 + 2*hh_;
+  if (h==0) h = 1;
 
-    // do the real updating
-    int k = this->ci_->at(kk);
-    *(gamma+k) = cap;
+  // clap to the range [-MAX,MAX]
+  double sgamma = mg/h;
+  if (sgamma<-MAXGAMMA) sgamma = -MAXGAMMA;
+  else if (sgamma>MAXGAMMA) sgamma = MAXGAMMA; 
 
-  }
+  // update each of the 2 coordinates
+  int k1 = this->ci_->at(0);
+  *(gamma+k1) = sgamma;
+  int k2 = this->ci_->at(1);
+  *(gamma+k2) = -sgamma;
+
 }
 
-void pVbExtSamp13AOSOVTSolver::calc_gain( double& gain )
+void pAOSO2Solver::calc_gain( double& gain )
 {
-  gain = 0;
-  int KK = mg_.size();
-  for (int k = 0; k < KK; ++k) {
-    double smg = mg_[k];
-    double sh  = h_[k];
-    if (sh == 0) sh = 1;
+  double mg1 = mg_[0], mg2 = mg_[1];
+  double h1 = h_[0], h2 = h_[1];
 
-    gain += (smg*smg/sh);
-  }
-  gain = 0.5*gain;
+  double mg = mg1 - mg2;
+  double h  = h1 + h2 + 2*hh_;
+  if (h==0) h = 1;
+
+  gain = mg*mg/(2*h);
 }
 
 
 // Implementation of pVbExtSamp12VTNode
-pVbExtSamp13AOSOVTNode::pVbExtSamp13AOSOVTNode(int _K)
+pAOSO2Node::pAOSO2Node(int _K)
 {
   id_ = 0;
   parent_ = left_ = right_ = 0;
@@ -272,7 +279,7 @@ pVbExtSamp13AOSOVTNode::pVbExtSamp13AOSOVTNode(int _K)
   fitvals_.assign(_K, 0);
 }
 
-pVbExtSamp13AOSOVTNode::pVbExtSamp13AOSOVTNode( int _id, int _K )
+pAOSO2Node::pAOSO2Node( int _id, int _K )
 {
   id_ = _id;
   parent_ = left_ = right_ = 0;
@@ -280,7 +287,7 @@ pVbExtSamp13AOSOVTNode::pVbExtSamp13AOSOVTNode( int _id, int _K )
   fitvals_.assign(_K, 0);
 }
 
-int pVbExtSamp13AOSOVTNode::calc_dir( float* _psample )
+int pAOSO2Node::calc_dir( float* _psample )
 {
   float _val = *(_psample + split_.var_idx_);
 
@@ -299,9 +306,9 @@ int pVbExtSamp13AOSOVTNode::calc_dir( float* _psample )
   return dir;
 }
 
-// Implementation of pVbExt13VT_best_split_finder (helper class)
-pVbExt13VT_best_split_finder::pVbExt13VT_best_split_finder(pVbExtSamp13AOSOVTTree *_tree, 
-  pVbExtSamp13AOSOVTNode *_node, pVbExtSamp13AOSOVTData *_data)
+// Implementation of pAOSO2_best_split_finder (helper class)
+pAOSO2_best_split_finder::pAOSO2_best_split_finder(pAOSO2Tree *_tree, 
+  pAOSO2Node *_node, pAOSO2Data *_data)
 {
   this->tree_ = _tree;
   this->node_ = _node;
@@ -310,7 +317,7 @@ pVbExt13VT_best_split_finder::pVbExt13VT_best_split_finder(pVbExtSamp13AOSOVTTre
   this->cb_split_.reset();
 }
 
-pVbExt13VT_best_split_finder::pVbExt13VT_best_split_finder (const pVbExt13VT_best_split_finder &f, cv::Split)
+pAOSO2_best_split_finder::pAOSO2_best_split_finder (const pAOSO2_best_split_finder &f, cv::Split)
 {
   this->tree_ = f.tree_;
   this->node_ = f.node_;
@@ -318,14 +325,14 @@ pVbExt13VT_best_split_finder::pVbExt13VT_best_split_finder (const pVbExt13VT_bes
   this->cb_split_ = f.cb_split_;
 }
 
-void pVbExt13VT_best_split_finder::operator() (const cv::BlockedRange &r)
+void pAOSO2_best_split_finder::operator() (const cv::BlockedRange &r)
 {
 
   // for each variable, find the best split
   for (int ii = r.begin(); ii != r.end(); ++ii) {
     int vi = this->tree_->sub_fi_[ii];
 
-    pVbExtSamp13AOSOVTSplit the_split;
+    pAOSO2Split the_split;
     the_split.reset();
     bool ret;
     ret = tree_->find_best_split_num_var(node_, data_, vi, 
@@ -339,24 +346,23 @@ void pVbExt13VT_best_split_finder::operator() (const cv::BlockedRange &r)
   } // for vi
 }
 
-void pVbExt13VT_best_split_finder::join (pVbExt13VT_best_split_finder &rhs)
+void pAOSO2_best_split_finder::join (pAOSO2_best_split_finder &rhs)
 {
   if ( rhs.cb_split_.expected_gain_ > (this->cb_split_.expected_gain_) ) {
     (this->cb_split_) = (rhs.cb_split_);
   }
 }
 
-// Implementation of pVbExtSamp13AOSOVTTree::Param
-pVbExtSamp13AOSOVTTree::Param::Param()
+// Implementation of pAOSO2Tree::Param
+pAOSO2Tree::Param::Param()
 {
   max_leaves_ = 2;
   node_size_ = 5;
   ratio_si_ = ratio_fi_ = 0.6;
-  ratio_ci_ = 0.8;
 }
 
-// Implementation of pVbExtSamp13AOSOVTTree
-void pVbExtSamp13AOSOVTTree::split( pVbExtSamp13AOSOVTData* _data )
+// Implementation of pAOSO2Tree
+void pAOSO2Tree::split( pAOSO2Data* _data )
 {
   // clear
   clear();
@@ -368,7 +374,7 @@ void pVbExtSamp13AOSOVTTree::split( pVbExtSamp13AOSOVTData* _data )
   // root node
   creat_root_node(_data);
   candidate_nodes_.push(&nodes_.front());
-  pVbExtSamp13AOSOVTNode* root = candidate_nodes_.top(); 
+  pAOSO2Node* root = candidate_nodes_.top(); 
   find_best_candidate_split(root, _data);
   int nleaves = 1;
 
@@ -376,7 +382,7 @@ void pVbExtSamp13AOSOVTTree::split( pVbExtSamp13AOSOVTData* _data )
   while ( nleaves < param_.max_leaves_ &&
           !candidate_nodes_.empty() )
   {
-    pVbExtSamp13AOSOVTNode* cur_node = candidate_nodes_.top(); // the most prior node
+    pAOSO2Node* cur_node = candidate_nodes_.top(); // the most prior node
     candidate_nodes_.pop();
     --nleaves;
 
@@ -404,12 +410,12 @@ void pVbExtSamp13AOSOVTTree::split( pVbExtSamp13AOSOVTData* _data )
   }
 }
 
-void pVbExtSamp13AOSOVTTree::fit( pVbExtSamp13AOSOVTData* _data )
+void pAOSO2Tree::fit( pAOSO2Data* _data )
 {
   // fitting node data for each leaf
-  std::list<pVbExtSamp13AOSOVTNode>::iterator it;
+  std::list<pAOSO2Node>::iterator it;
   for (it = nodes_.begin(); it != nodes_.end(); ++it) {
-    pVbExtSamp13AOSOVTNode* nd = &(*it);
+    pAOSO2Node* nd = &(*it);
 
     if (nd->left_!=0) { // not a leaf
       continue;
@@ -427,26 +433,26 @@ void pVbExtSamp13AOSOVTTree::fit( pVbExtSamp13AOSOVTData* _data )
 }
 
 
-pVbExtSamp13AOSOVTNode* pVbExtSamp13AOSOVTTree::get_node( float* _sample)
+pAOSO2Node* pAOSO2Tree::get_node( float* _sample)
 {
-  pVbExtSamp13AOSOVTNode* cur_node = &(nodes_.front());
+  pAOSO2Node* cur_node = &(nodes_.front());
   while (true) {
     if (cur_node->left_==0) break; // leaf reached 
 
     int dir = cur_node->calc_dir(_sample);
-    pVbExtSamp13AOSOVTNode* next = (dir==-1) ? (cur_node->left_) : (cur_node->right_);
+    pAOSO2Node* next = (dir==-1) ? (cur_node->left_) : (cur_node->right_);
     cur_node = next;
   }
   return cur_node;
 }
 
 
-void pVbExtSamp13AOSOVTTree::get_is_leaf( VecInt& is_leaf )
+void pAOSO2Tree::get_is_leaf( VecInt& is_leaf )
 {
   is_leaf.clear();
   is_leaf.resize(nodes_.size());
 
-  std::list<pVbExtSamp13AOSOVTNode>::iterator it = nodes_.begin();
+  std::list<pAOSO2Node>::iterator it = nodes_.begin();
   for (int i = 0; it!=nodes_.end(); ++it, ++i) {
     if (it->left_==0 && it->right_==0)
       is_leaf[i] = 1;
@@ -455,7 +461,7 @@ void pVbExtSamp13AOSOVTTree::get_is_leaf( VecInt& is_leaf )
   } // for i
 }
 
-void pVbExtSamp13AOSOVTTree::predict( MLData* _data )
+void pAOSO2Tree::predict( MLData* _data )
 {
   int N = _data->X.rows;
   int K = K_;
@@ -469,7 +475,7 @@ void pVbExtSamp13AOSOVTTree::predict( MLData* _data )
   }
 }
 
-void pVbExtSamp13AOSOVTTree::predict( float* _sample, float* _score )
+void pAOSO2Tree::predict( float* _sample, float* _score )
 {
   // initialize all the *K* classes
   for (int k = 0; k < K_; ++k) {
@@ -477,7 +483,7 @@ void pVbExtSamp13AOSOVTTree::predict( float* _sample, float* _score )
   }
 
   // update all the K classes...
-  pVbExtSamp13AOSOVTNode* nd = get_node(_sample);
+  pAOSO2Node* nd = get_node(_sample);
   for (int k = 0; k < K_; ++k) {
     float val = static_cast<float>( nd->fitvals_[k] );
     *(_score + k) = val;
@@ -486,7 +492,7 @@ void pVbExtSamp13AOSOVTTree::predict( float* _sample, float* _score )
 }
 
 
-void pVbExtSamp13AOSOVTTree::subsample_samples(pVbExtSamp13AOSOVTData* _data)
+void pAOSO2Tree::subsample_samples(pAOSO2Data* _data)
 {
   /// subsample_samples samples
   cv::Mat_<double> g_samp;
@@ -503,7 +509,7 @@ void pVbExtSamp13AOSOVTTree::subsample_samples(pVbExtSamp13AOSOVTData* _data)
 
 }
 
-void pVbExtSamp13AOSOVTTree::subsample_classes_for_node( pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data )
+void pAOSO2Tree::subsample_classes_for_node( pAOSO2Node* _node, pAOSO2Data* _data )
 {
   /// find best two classes
 
@@ -597,7 +603,7 @@ void pVbExtSamp13AOSOVTTree::subsample_classes_for_node( pVbExtSamp13AOSOVTNode*
   //_node->sub_ci_ = ci_wt;
 }
 
-void pVbExtSamp13AOSOVTTree::clear()
+void pAOSO2Tree::clear()
 {
   nodes_.clear();
   candidate_nodes_.~priority_queue();
@@ -606,10 +612,10 @@ void pVbExtSamp13AOSOVTTree::clear()
   node_sc_.clear();
 }
 
-void pVbExtSamp13AOSOVTTree::creat_root_node( pVbExtSamp13AOSOVTData* _data )
+void pAOSO2Tree::creat_root_node( pAOSO2Data* _data )
 {
-  nodes_.push_back(pVbExtSamp13AOSOVTNode(0,K_));
-  pVbExtSamp13AOSOVTNode* root = &(nodes_.back());
+  nodes_.push_back(pAOSO2Node(0,K_));
+  pAOSO2Node* root = &(nodes_.back());
 
   // samples in node
   int NN = this->sub_si_.size();
@@ -635,7 +641,7 @@ void pVbExtSamp13AOSOVTTree::creat_root_node( pVbExtSamp13AOSOVTData* _data )
   this->calc_gain(root, _data);
 }
 
-bool pVbExtSamp13AOSOVTTree::find_best_candidate_split( pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data )
+bool pAOSO2Tree::find_best_candidate_split( pAOSO2Node* _node, pAOSO2Data* _data )
 {
   // subsample the features for the current node (node level)
   int NF = _data->data_cls_->X.cols;
@@ -646,7 +652,7 @@ bool pVbExtSamp13AOSOVTTree::find_best_candidate_split( pVbExtSamp13AOSOVTNode* 
   cv::BlockedRange br(0,nsubvar,1);
 
   // do the search in parallel
-  pVbExt13VT_best_split_finder bsf(this,_node,_data);
+  pAOSO2_best_split_finder bsf(this,_node,_data);
   cv::parallel_reduce(br, bsf);
 
   // update node's split
@@ -655,8 +661,8 @@ bool pVbExtSamp13AOSOVTTree::find_best_candidate_split( pVbExtSamp13AOSOVTNode* 
 
 }
 
-bool pVbExtSamp13AOSOVTTree::find_best_split_num_var( 
-  pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data, int _ivar, pVbExtSamp13AOSOVTSplit &cb_split)
+bool pAOSO2Tree::find_best_split_num_var( 
+  pAOSO2Node* _node, pAOSO2Data* _data, int _ivar, pAOSO2Split &cb_split)
 {
   VecIdx node_sample_si;
   MLData* data_cls = _data->data_cls_;
@@ -671,7 +677,7 @@ bool pVbExtSamp13AOSOVTTree::find_best_split_num_var(
 #endif
 
   // initialize
-  pVbExtSamp13AOSOVTSolver sol_left(_data, _node->sol_this_.ci_), 
+  pAOSO2Solver sol_left(_data, _node->sol_this_.ci_), 
                       sol_right = _node->sol_this_;
 
   // scan each possible split 
@@ -711,7 +717,7 @@ bool pVbExtSamp13AOSOVTTree::find_best_split_num_var(
     cb_split);
 }
 
-void pVbExtSamp13AOSOVTTree::make_node_sorted_idx( pVbExtSamp13AOSOVTNode* _node, MLData* _data, int _ivar, VecIdx& sorted_idx_node )
+void pAOSO2Tree::make_node_sorted_idx( pAOSO2Node* _node, MLData* _data, int _ivar, VecIdx& sorted_idx_node )
 {
   VecIdx16 sam_idx16;
   VecIdx32 sam_idx32;
@@ -747,11 +753,11 @@ void pVbExtSamp13AOSOVTTree::make_node_sorted_idx( pVbExtSamp13AOSOVTNode* _node
   }  
 }
 
-bool pVbExtSamp13AOSOVTTree::set_best_split_num_var( 
-  pVbExtSamp13AOSOVTNode* _node, MLData* _data, int _ivar, 
+bool pAOSO2Tree::set_best_split_num_var( 
+  pAOSO2Node* _node, MLData* _data, int _ivar, 
   VecIdx& node_sample_si, 
   int best_i, double best_gain, double best_gain_left, double best_gain_right,
-  pVbExtSamp13AOSOVTSplit &cb_split)
+  pAOSO2Split &cb_split)
 {
   if (best_i==-1) return false; // fail to find...
 
@@ -777,7 +783,7 @@ bool pVbExtSamp13AOSOVTTree::set_best_split_num_var(
   return true;  
 }
 
-bool pVbExtSamp13AOSOVTTree::can_split_node( pVbExtSamp13AOSOVTNode* _node )
+bool pAOSO2Tree::can_split_node( pAOSO2Node* _node )
 {
   bool flag = true;
   int nn = _node->sample_idx_.size();
@@ -786,15 +792,15 @@ bool pVbExtSamp13AOSOVTTree::can_split_node( pVbExtSamp13AOSOVTNode* _node )
           idx != -1);                  // has candidate split  
 }
 
-bool pVbExtSamp13AOSOVTTree::split_node( pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data )
+bool pAOSO2Tree::split_node( pAOSO2Node* _node, pAOSO2Data* _data )
 {
   // create left and right node
-  pVbExtSamp13AOSOVTNode tmp1(nodes_.size(), K_);
+  pAOSO2Node tmp1(nodes_.size(), K_);
   nodes_.push_back(tmp1);
   _node->left_ = &(nodes_.back());
   _node->left_->parent_ = _node;
 
-  pVbExtSamp13AOSOVTNode tmp2(nodes_.size(), K_);
+  pAOSO2Node tmp2(nodes_.size(), K_);
   nodes_.push_back(tmp2);
   _node->right_ = &(nodes_.back());
   _node->right_->parent_ = _node;
@@ -851,14 +857,14 @@ bool pVbExtSamp13AOSOVTTree::split_node( pVbExtSamp13AOSOVTNode* _node, pVbExtSa
   return true;
 }
 
-void pVbExtSamp13AOSOVTTree::calc_gain(pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data)
+void pAOSO2Tree::calc_gain(pAOSO2Node* _node, pAOSO2Data* _data)
 {
   double gain;
   _node->sol_this_.calc_gain(gain);
   _node->split_.this_gain_ = gain;
 }
 
-void pVbExtSamp13AOSOVTTree::fit_node( pVbExtSamp13AOSOVTNode* _node, pVbExtSamp13AOSOVTData* _data )
+void pAOSO2Tree::fit_node( pAOSO2Node* _node, pAOSO2Data* _data )
 {
   int nn = _node->sample_idx_.size();
   if (nn<=0) return;
@@ -943,20 +949,20 @@ void pVbExtSamp13AOSOVTTree::fit_node( pVbExtSamp13AOSOVTNode* _node, pVbExtSamp
 #endif // OUTPUT
 }
 
-// Implementation of pVbExtSamp13AOSOVTLogitBoost::Param
-pVbExtSamp13AOSOVTLogitBoost::Param::Param()
+// Implementation of pAOSOLogitBoostV2::Param
+pAOSOLogitBoostV2::Param::Param()
 {
   T = 2;
   v = 0.1;
   J = 4;
   ns = 1;
-  ratio_si_ = ratio_fi_ = ratio_ci_ = 0.6;
-  weight_ratio_ci_ = weight_ratio_si_ = 0.6;
+  ratio_si_ = ratio_fi_ = 0.6;
+  weight_ratio_si_ = 0.6;
 }
-// Implementation of pVbExtSamp13AOSOVTLogitBoost
-const double pVbExtSamp13AOSOVTLogitBoost::EPS_LOSS = 1e-6;
-const double pVbExtSamp13AOSOVTLogitBoost::MAX_F = 100;
-void pVbExtSamp13AOSOVTLogitBoost::train( MLData* _data )
+// Implementation of pAOSOLogitBoostV2
+const double pAOSOLogitBoostV2::EPS_LOSS = 1e-6;
+const double pAOSOLogitBoostV2::MAX_F = 100;
+void pAOSOLogitBoostV2::train( MLData* _data )
 {
   train_init(_data);
 
@@ -987,7 +993,7 @@ void pVbExtSamp13AOSOVTLogitBoost::train( MLData* _data )
 
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::predict( MLData* _data )
+void pAOSOLogitBoostV2::predict( MLData* _data )
 {
   int N = _data->X.rows;
   int K = K_;
@@ -1001,7 +1007,7 @@ void pVbExtSamp13AOSOVTLogitBoost::predict( MLData* _data )
   }
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::predict( float* _sapmle, float* _score )
+void pAOSOLogitBoostV2::predict( float* _sapmle, float* _score )
 {
   // initialize
   for (int k = 0; k < K_; ++k) {
@@ -1020,7 +1026,7 @@ void pVbExtSamp13AOSOVTLogitBoost::predict( float* _sapmle, float* _score )
   } // for t
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::predict( MLData* _data, int _Tpre )
+void pAOSOLogitBoostV2::predict( MLData* _data, int _Tpre )
 {
   // trees to be used
   if (_Tpre > NumIter_) _Tpre = NumIter_;
@@ -1057,7 +1063,7 @@ void pVbExtSamp13AOSOVTLogitBoost::predict( MLData* _data, int _Tpre )
   Tpre_beg_ = _Tpre;
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::predict( float* _sapmle, float* _score, int _Tpre )
+void pAOSOLogitBoostV2::predict( float* _sapmle, float* _score, int _Tpre )
 {
   // IMPORTANT: caller should assure the validity of _Tpre
 
@@ -1079,17 +1085,17 @@ void pVbExtSamp13AOSOVTLogitBoost::predict( float* _sapmle, float* _score, int _
 }
 
 
-int pVbExtSamp13AOSOVTLogitBoost::get_class_count()
+int pAOSOLogitBoostV2::get_class_count()
 {
   return K_;
 }
 
-int pVbExtSamp13AOSOVTLogitBoost::get_num_iter()
+int pAOSOLogitBoostV2::get_num_iter()
 {
   return NumIter_;
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::get_nr( VecIdx& nr_wts, VecIdx& nr_wtc )
+void pAOSOLogitBoostV2::get_nr( VecIdx& nr_wts, VecIdx& nr_wtc )
 {
   nr_wts.resize(this->NumIter_);
   nr_wtc.resize(this->NumIter_);
@@ -1101,7 +1107,7 @@ void pVbExtSamp13AOSOVTLogitBoost::get_nr( VecIdx& nr_wts, VecIdx& nr_wtc )
 
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::get_cc( int itree, VecInt& node_cc )
+void pAOSOLogitBoostV2::get_cc( int itree, VecInt& node_cc )
 {
   if (NumIter_==0) return;
   if (itree<0) itree = 0;
@@ -1111,7 +1117,7 @@ void pVbExtSamp13AOSOVTLogitBoost::get_cc( int itree, VecInt& node_cc )
 }
 
 
-void pVbExtSamp13AOSOVTLogitBoost::get_sc( int itree, VecInt& node_sc )
+void pAOSOLogitBoostV2::get_sc( int itree, VecInt& node_sc )
 {
   if (NumIter_==0) return;
   if (itree<0) itree = 0;
@@ -1120,7 +1126,7 @@ void pVbExtSamp13AOSOVTLogitBoost::get_sc( int itree, VecInt& node_sc )
   node_sc = trees_[itree].node_sc_;
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::get_is_leaf( int itree, VecInt& is_leaf )
+void pAOSOLogitBoostV2::get_is_leaf( int itree, VecInt& is_leaf )
 {
   if (NumIter_==0) return;
   if (itree<0) itree = 0;
@@ -1129,7 +1135,7 @@ void pVbExtSamp13AOSOVTLogitBoost::get_is_leaf( int itree, VecInt& is_leaf )
   trees_[itree].get_is_leaf(is_leaf);
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::train_init( MLData* _data )
+void pAOSOLogitBoostV2::train_init( MLData* _data )
 {
   // class count
   K_ = _data->get_class_count();
@@ -1170,11 +1176,9 @@ void pVbExtSamp13AOSOVTLogitBoost::train_init( MLData* _data )
     trees_[t].param_.max_leaves_ = param_.J;
     trees_[t].param_.node_size_ = param_.ns;
 
-    trees_[t].param_.ratio_ci_ = param_.ratio_ci_;
     trees_[t].param_.ratio_fi_ = param_.ratio_fi_;
     trees_[t].param_.ratio_si_ = param_.ratio_si_;
 
-    trees_[t].param_.weight_ratio_ci_ = param_.weight_ratio_ci_;
     trees_[t].param_.weight_ratio_si_ = param_.weight_ratio_si_;
   }
 
@@ -1190,7 +1194,7 @@ void pVbExtSamp13AOSOVTLogitBoost::train_init( MLData* _data )
   Tpre_beg_ = 0;
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::update_F(int t)
+void pAOSOLogitBoostV2::update_F(int t)
 {
   int N = logitdata_.data_cls_->X.rows;
   double v = param_.v;
@@ -1208,7 +1212,7 @@ void pVbExtSamp13AOSOVTLogitBoost::update_F(int t)
   } // for i
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::update_p()
+void pAOSOLogitBoostV2::update_p()
 {
   int N = F_.rows;
   int K = K_;
@@ -1233,7 +1237,7 @@ void pVbExtSamp13AOSOVTLogitBoost::update_p()
   }// for n  
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::update_gg()
+void pAOSOLogitBoostV2::update_gg()
 {
   int N = F_.rows;
   double delta = 0;
@@ -1253,7 +1257,7 @@ void pVbExtSamp13AOSOVTLogitBoost::update_gg()
   } // for i
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::update_abs_grad_class(int t)
+void pAOSOLogitBoostV2::update_abs_grad_class(int t)
 {
   int N = F_.rows;
 
@@ -1269,7 +1273,7 @@ void pVbExtSamp13AOSOVTLogitBoost::update_abs_grad_class(int t)
 }
 
 
-void pVbExtSamp13AOSOVTLogitBoost::calc_loss( MLData* _data )
+void pAOSOLogitBoostV2::calc_loss( MLData* _data )
 {
   const double PMIN = 0.0001;
   int N = _data->X.rows;
@@ -1283,7 +1287,7 @@ void pVbExtSamp13AOSOVTLogitBoost::calc_loss( MLData* _data )
   }
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::calc_loss_iter( int t )
+void pAOSOLogitBoostV2::calc_loss_iter( int t )
 {
   double sum = 0;
   int N = L_.rows;
@@ -1293,7 +1297,7 @@ void pVbExtSamp13AOSOVTLogitBoost::calc_loss_iter( int t )
   L_iter_.at<double>(t) = sum;
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::calc_loss_class(MLData* _data,  int t )
+void pAOSOLogitBoostV2::calc_loss_class(MLData* _data,  int t )
 {
   const double PMIN = 0.0001;
   int N = _data->X.rows;
@@ -1307,7 +1311,7 @@ void pVbExtSamp13AOSOVTLogitBoost::calc_loss_class(MLData* _data,  int t )
   }
 }
 
-bool pVbExtSamp13AOSOVTLogitBoost::should_stop( int t )
+bool pAOSOLogitBoostV2::should_stop( int t )
 {
   // stop if too small #classes subsampled
   if ( ! (trees_[t].node_cc_.empty()) ) {
@@ -1320,7 +1324,7 @@ bool pVbExtSamp13AOSOVTLogitBoost::should_stop( int t )
   return ( (loss<EPS_LOSS) ? true : false );
 }
 
-void pVbExtSamp13AOSOVTLogitBoost::calc_grad( int t )
+void pAOSOLogitBoostV2::calc_grad( int t )
 {
   int N = F_.rows;
   double delta = 0;

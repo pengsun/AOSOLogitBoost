@@ -71,11 +71,14 @@ int main ()
   tr.preprocess();
 
   // AOTO Boost
-  AOSOLogitBoostV2 ab;
+  pAOSOLogitBoostV2 ab;
   ab.param_.J = 4;
   ab.param_.T = 3000;
   ab.param_.v = 0.1;
   ab.param_.ns = 1;
+  ab.param_.ratio_si_ = 0.5;
+  ab.param_.weight_ratio_si_ = 0.8;
+  ab.param_.ratio_fi_ = 1.1;
   ab.train(&tr);
 
   MLData te;
@@ -92,7 +95,7 @@ int main ()
   TT = ab.get_num_iter();
   cout << endl;
   cout << "TT = " << TT << endl << endl;
-  cout << "train loss = " << ab.get_train_loss() << endl;
+  //cout << "train loss = " << ab.get_train_loss() << endl;
 
   MLData te3;
   te3.X = tr.X;
