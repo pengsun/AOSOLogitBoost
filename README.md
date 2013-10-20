@@ -5,12 +5,14 @@ Codes for the the so-called AOSO-LogitBoost, which is an up-to-date (yet state-o
 
 Features
 --------
-* C++ source codes, with interfaces in other languages (say, Matlab).
+* C++ source codes
+  ** Interfaces in Matlab
 * Multi threaded implementation (depending on tbb)
+* Training speedup by subsampling instances/features (mature best-practice) is supported
 
 Dependencies
 ------------
-Opencv, which itself depends on tbb when using multi threaded features.
+Opencv (opencv_core only), which itself depends on tbb for multi-threading.
 
 
 Examples
@@ -96,7 +98,7 @@ Besides the script files in directory "./matlab/run_script", we offer a simple e
     err_rate = sum(yy~=Yte)/length(Yte) 
 
 ### Matlab example (multiple threaded)
-Just replace the  class "AOSOLogitBoost" in last example with "pAOSOLogitBoost", where the leading "p" is for parallel. 
+Just replace the  class "AOSOLogitBoost" in last example with "pAOSOLogitBoost", where the leading "p" is for parallel. See the script files
 
 References
 ----------
