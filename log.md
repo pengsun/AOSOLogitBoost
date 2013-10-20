@@ -5,11 +5,13 @@ The LogitBoost implementation described in "Sun P., Reid, M.D., Zhou J. AOSO-Log
 
 pAOSOLogitBoost
 --------
+2013-7
 Parallel version (multi-threaded) of AOSOLogitBoost.
 
 
 pAOSOLogitBoostV2
 --------
+2013-10-20
 Improvements to pAOSOLogitBoost:
 * Speedup (see matlab/run_script/run_pAOSOLogitBoostV2_xxx.m) of training by 
   ** subsampling instances (Friedman's weight trimming) and 
