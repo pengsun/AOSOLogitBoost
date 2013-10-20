@@ -97,7 +97,7 @@ Besides the script files in directory "./matlab/run_script", we offer a simple e
     err_rate = sum(yy~=Yte)/length(Yte) 
 
 ### Matlab example (multiple threaded)
-Just replace the  class "AOSOLogitBoost" in last example with "pAOSOLogitBoost", where the leading "p" is for parallel. See the script files
+Just replace the  class "AOSOLogitBoost" in last example with "pAOSOLogitBoost", where the leading "p" is for parallel. See the script files in "Matlab/script_run".
 
 References
 ----------
