@@ -20,8 +20,14 @@ Examples
     TODO
     
 ### Matlab example (signle threaded)   
-Besides the script files in directory "./matlab/run_script", we offer a simple example here:
+The interface is Matlab class. Currently we provide the following classes:
+* AOSOLogitBoost: Single threaded implementation of AOSO-LogitBoot.
+* pAOSOLogitBoost: Multiple threaded implementation of AOSO-LogitBoost.
+* pAOSOLogitBoostV2: Multiple threaded implementation of AOSO-LogitBoost, speedup by subsampling instances/features.
 
+See the script files in directory "./matlab/run_script" for various examples. In the following we provide some simple examples:
+
+Example 1. Calling AOSOLogitBoost: 
 
     %% prepare train/test data. 
     % 3-class classification. Features are 2 dimensional. 
@@ -96,10 +102,43 @@ Besides the script files in directory "./matlab/run_script", we offer a simple e
     yy = yy - 1; % index should be 0-base 
     err_rate = sum(yy~=Yte)/length(Yte) 
 
-### Matlab example (multiple threaded)
+Exmaple 2. Calling pAOSOLogitBoost
+
 Just replace the  class "AOSOLogitBoost" in last example with "pAOSOLogitBoost", where the leading "p" is for parallel. See the script files in "Matlab/script_run".
+
+Example 3. Calling pAOSOLogitBoostV2
+
+    %% prepare train/testdata
+    % The same with pAOSOLogitBoost, codes omitted here
+    
+    %% parameters
+    T = 2; % #iterations
+    v = 0.1; % shrinkage factor
+    J = 4; % #terminal nodes
+    nodesize = 1; % node size. 1 is suggested
+    catmask = uint8([0,0,0,0]); % all features are NOT categorical data
+                                % Currently only numerical data are supported:)
+    wrs = 0.9; % subsampling instances accouting for 90% weights (denoted by N1)
+    rs = 0.4;  % subsampling 40% instances (denoted by N2)
+               % min(N1,N2) instances will be used at each boosting iteration
+    rf = 0.6;  % 60% features will be used at each tree node           
+    
+    %% train    
+    hboost = pAOSOLogitBoostV2(); % handle
+    hboost = train(hboost,...
+      Xtr,Ytr,...
+      'T', T,...
+      'v', v,...
+      'J',J,...
+      'node_size',nodesize,...
+      'var_cat_mask',catmask,...
+      'wrs',wrs, 'rs',rs,...
+      'rf',rf);
+
+    %% predict and error rate
+    % codes omitted here
 
 References
 ----------
-Those who are interested in algorithm's details are referred to the paper:
-"Peng Sun, Mark D. Reid, Jie Zhou. "AOSO-LogitBoost: Adaptive One-Vs-One LogitBoost for Multi-Class Problems", International Conference on Machine Learning (ICML 2012)"
+If you are interested in algorithm's details or concerning how much the improvement is, please refer to the paper:
+"Peng Sun, Mark D. Reid, Jie Zhou. AOSO-LogitBoost: Adaptive One-Vs-One LogitBoost for Multi-Class Problems, International Conference on Machine Learning (ICML 2012)"
