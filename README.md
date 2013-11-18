@@ -16,10 +16,10 @@ Opencv (opencv_core only), which itself depends on tbb for multi-threading.
 
 Examples
 --------
-### C++ example
+### C++ examples
     TODO
     
-### Matlab example (signle threaded)   
+### Matlab examples   
 The interface is Matlab class. Currently we provide the following classes:
 * AOSOLogitBoost: Single threaded implementation of AOSO-LogitBoot.
 * pAOSOLogitBoost: Multiple threaded implementation of AOSO-LogitBoost.
