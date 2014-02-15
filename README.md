@@ -1,7 +1,7 @@
 AOSOLogitBoost
 ==============
 
-Codes for the the so-called AOSO-LogitBoost, which is an up-to-date (yet state-of-the-art, probably ) implementation of Friedman's LogitBoost for multi-class classification. Once you decide that LogitBoost is suitable to your classification problem, just try this AOSO-LogitBoost which typically has lower classification error and faster convergence rate than original LogitBoost. 
+Codes for the the so-called AOSO-LogitBoost, which is an up-to-date (yet state-of-the-art, probably ) variant of LogitBoost[1] for multi-class classification. For binary classification, it reduces to the original LogitBoost (with the robust tree split gain criterion[2]). Once you decide that LogitBoost is suitable to your classification problem, just try this AOSO-LogitBoost which typically has lower classification error and faster convergence rate than original LogitBoost. 
 
 Features
 --------
@@ -138,7 +138,14 @@ Example 3. Calling pAOSOLogitBoostV2
     %% predict and error rate
     % codes omitted here
 
+The method
+----------
+If you are interested in algorithm's details or concerning how much the improvement is, please refer to [3].
+
 References
 ----------
-If you are interested in algorithm's details or concerning how much the improvement is, please refer to the paper:
-"Peng Sun, Mark D. Reid, Jie Zhou. AOSO-LogitBoost: Adaptive One-Vs-One LogitBoost for Multi-Class Problems, International Conference on Machine Learning (ICML 2012)"
+[1] Jerome Friedman, Trevor Hastie and Robert Tibshirani. Additive logistic regression: a statistical view of boosting. Annals of Statistics 28(2), 2000. 337–407.
+
+[2] Ping Li. Robust logitboost and adaptive base class (abc) logitboost, Conference on Uncertainty in Artificial Intelligence (UAI 2010).
+
+[3] Peng Sun, Mark D. Reid, Jie Zhou. AOSO-LogitBoos t: Adaptive One-Vs-One LogitBoost for Multi-Class Problems, International Conference on Machine Learning (ICML 2012).
