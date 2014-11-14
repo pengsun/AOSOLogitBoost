@@ -140,7 +140,7 @@ Example 3. Calling pAOSOLogitBoostV2
 
 The method
 ----------
-If you are interested in algorithm's details or concerning how much the improvement is, please refer to [3].
+If you are interested in algorithm's details or concerning how much the improvement is, please refer to [3, 4].
 
 References
 ----------
@@ -149,3 +149,5 @@ References
 [2] Ping Li. Robust logitboost and adaptive base class (abc) logitboost, Conference on Uncertainty in Artificial Intelligence (UAI 2010).
 
 [3] Peng Sun, Mark D. Reid, Jie Zhou. AOSO-LogitBoos t: Adaptive One-Vs-One LogitBoost for Multi-Class Problems, International Conference on Machine Learning (ICML 2012).
+
+[4] Peng Sun, Mark D. Reid, Jie Zhou. "An Improved Multiclass LogitBoost Using Adaptive-One-vs-One", Machine Learning (MLJ), 2014, 97(3): 295-326.
