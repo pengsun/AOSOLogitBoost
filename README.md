@@ -1,33 +1,29 @@
 AOSOLogitBoost
 ==============
 
-Codes for the the so-called AOSO-LogitBoost, which is an up-to-date (yet state-of-the-art, probably ) variant of LogitBoost[1] for multi-class classification. For binary classification, it reduces to the original LogitBoost (with the robust tree split gain criterion[2]). Once you decide that LogitBoost is suitable to your classification problem, just try this AOSO-LogitBoost which typically has lower classification error and faster convergence rate than original LogitBoost. 
+Codes for the the so-called AOSO-LogitBoost[3,4], which is an up-to-date (yet state-of-the-art, probably ) variant of LogitBoost[1] but focuses on multi-class classification. For binary classification, it reduces to the original LogitBoost[1] with the robust tree split gain criterion[2]. Once you decide that LogitBoost is suitable to your classification problem, just try this AOSO-LogitBoost which typically has lower classification error and faster convergence rate than original LogitBoost. 
 
-Features
---------
-* C++ source codes, wiht interfaces in Matlab
+## Features
+* C++ source codes, with interfaces in Matlab
 * Multi threaded implementation (depending on tbb)
 * Training speedup by subsampling instances/features (mature best-practice) is supported
 
-Dependencies
-------------
+## 3rd Party Dependencies
 Opencv (opencv_core only), which itself depends on tbb for multi-threading.
 
-
-Examples
---------
+## Examples
 ### C++ examples
     TODO
     
 ### Matlab examples   
-The interface is Matlab class. Currently we provide the following classes:
+The C++ codes are wrapped with Matlab class. Currently we provide the following classes:
 * AOSOLogitBoost: Single threaded implementation of AOSO-LogitBoot.
 * pAOSOLogitBoost: Multiple threaded implementation of AOSO-LogitBoost.
 * pAOSOLogitBoostV2: Multiple threaded implementation of AOSO-LogitBoost, speedup by subsampling instances/features.
 
-See the script files in directory "./matlab/run_script" for various examples. In the following we provide some simple examples:
+See the script files in directory `./matlab/run_script` for various examples. To begin with, here are some simple examples:
 
-Example 1. Calling AOSOLogitBoost: 
+#### Example 1. Calling AOSOLogitBoost: 
 
     %% prepare train/test data. 
     % 3-class classification. Features are 2 dimensional. 
@@ -102,13 +98,14 @@ Example 1. Calling AOSOLogitBoost:
     yy = yy - 1; % index should be 0-base 
     err_rate = sum(yy~=Yte)/length(Yte) 
 
-Exmaple 2. Calling pAOSOLogitBoost
+#### Exmaple 2. Calling pAOSOLogitBoost
 
-Just replace the  class "AOSOLogitBoost" in last example with "pAOSOLogitBoost", where the leading "p" is for parallel. See the script files in "Matlab/script_run".
+Just replace the class `AOSOLogitBoost` in previous example with `pAOSOLogitBoost`, where the leading "p" stands for parallel. See the script files in `Matlab/script_run`.
 
-Example 3. Calling pAOSOLogitBoostV2
+#### Example 3. Calling pAOSOLogitBoostV2
 
     %% prepare train/testdata
+    ...
     % The same with pAOSOLogitBoost, codes omitted here
     
     %% parameters
@@ -138,12 +135,10 @@ Example 3. Calling pAOSOLogitBoostV2
     %% predict and error rate
     % codes omitted here
 
-The method
-----------
+## The method
 If you are interested in algorithm's details or concerning how much the improvement is, please refer to [3, 4].
 
-References
-----------
+## References
 [1] Jerome Friedman, Trevor Hastie and Robert Tibshirani. Additive logistic regression: a statistical view of boosting. Annals of Statistics 28(2), 2000. 337–407.
 
 [2] Ping Li. Robust logitboost and adaptive base class (abc) logitboost, Conference on Uncertainty in Artificial Intelligence (UAI 2010).
