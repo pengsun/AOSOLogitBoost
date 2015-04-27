@@ -1,7 +1,7 @@
 AOSOLogitBoost
 ==============
 
-Codes for the the so-called AOSO-LogitBoost[3,4], which is an up-to-date (yet state-of-the-art, probably ) variant of LogitBoost[1] but focuses on multi-class classification. For binary classification, it reduces to the original LogitBoost[1] with the robust tree split gain criterion[2]. Once you decide that LogitBoost is suitable to your classification problem, just try this AOSO-LogitBoost which typically has lower classification error and faster convergence rate than original LogitBoost. 
+Codes for the the so-called AOSO-LogitBoost[3,4], which is an up-to-date (yet state-of-the-art, probably ) variant of LogitBoost[1] but focuses on multi-class classification. For binary classification, it reduces to the original LogitBoost[1] with the robust tree split gain criterion[2]. Onc e you decide that LogitBoost is suitable to your classification problem, just try this AOSO-LogitBoost which typically has lower classification error and faster convergence rate than original LogitBoost. 
 
 ## Features
 * C++ source codes, with interfaces in Matlab
@@ -10,6 +10,13 @@ Codes for the the so-called AOSO-LogitBoost[3,4], which is an up-to-date (yet st
 
 ## 3rd Party Dependencies
 Opencv (opencv_core only), which itself depends on tbb for multi-threading.
+
+## Install
+* Compile the mex files. cd to `AOSOLogitBoost/matlab/mex`, run `make_xxx.m` to compile the corresponding `xxx` Boosting algorithm.
+  ** Remember to modify or add new `settings` m file so that the 3rd party libraries point to the right path. For example, in the first line of `make_pAOSOLogitBoostV2.m` the `settings_yyy.m` is called to set the path for OpenCV and TBB, check the contents and adapt them to your own machine.
+  ** The compiled mex files will be copied to `AOSOLogitBoost/private` directory. A win32 mex file is already there as the example.
+  ** If you've compiled OpenCV as dynamic linking, make sure the binaries are on your system path.
+* Done! cd to `AOSOLogitBoost/matlab/script_run` and play around!
 
 ## Examples
 ### C++ examples
