@@ -425,7 +425,7 @@ bool AOSOTree::find_best_split_num_var(
     
   }
 #endif
-  CV_Assert(ns >= 1);
+  if (ns < 1) return false;
 
   // initialize
   AOSOSolver sol_left(_data,_cls1,_cls2), sol_right(_data,_cls1,_cls2);
@@ -592,7 +592,7 @@ void AOSOTree::calc_gain(AOSONodegain* _node, AOSODatagain* _data)
 void AOSOTree::fit_node( AOSONodegain* _node, AOSODatagain* _data )
 {
   int nn = _node->sample_idx_.size();
-  CV_Assert(nn>0);
+  if (nn<=0) return;
 
   int cls1, cls2;
   AOSOSolver::find_best_two(_data, _node->sample_idx_, cls1,cls2);
