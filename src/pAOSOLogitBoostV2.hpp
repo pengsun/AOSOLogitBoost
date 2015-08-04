@@ -5,7 +5,9 @@
 #include <list>
 #include <queue>
 #include <bitset>
-#include <opencv2/core/internal.hpp>
+
+#include "opencv2/core.hpp"
+#include "tbb/tbb.h"
 
 // Vector for index
 typedef std::vector<int> VecIdx;
@@ -99,9 +101,9 @@ class pAOSO2Tree;
 struct pAOSO2_best_split_finder {
   pAOSO2_best_split_finder (pAOSO2Tree *_tree, 
     pAOSO2Node* _node, pAOSO2Data* _data); // customized data
-  pAOSO2_best_split_finder (const pAOSO2_best_split_finder &f, cv::Split); // required
+  pAOSO2_best_split_finder (const pAOSO2_best_split_finder &f, tbb::split); // required
 
-  void operator () (const cv::BlockedRange &r); // required
+  void operator () (const tbb::blocked_range<int> &r); // required
   void join (pAOSO2_best_split_finder &rhs); // required
 
   pAOSO2Tree *tree_;

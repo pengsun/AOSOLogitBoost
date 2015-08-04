@@ -1,0 +1,9 @@
+/test_VC/test_pAOSOLogitBoost/Backup
+*.filters
+*.vcxproj
+*.suo
+*.mexw64
+/test_VC/test_pAOSOLogitBoostV2/Backup
+*.sdf
+*.htm
+*.txt

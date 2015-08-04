@@ -317,7 +317,7 @@ pAOSO2_best_split_finder::pAOSO2_best_split_finder(pAOSO2Tree *_tree,
   this->cb_split_.reset();
 }
 
-pAOSO2_best_split_finder::pAOSO2_best_split_finder (const pAOSO2_best_split_finder &f, cv::Split)
+pAOSO2_best_split_finder::pAOSO2_best_split_finder (const pAOSO2_best_split_finder &f, tbb::split)
 {
   this->tree_ = f.tree_;
   this->node_ = f.node_;
@@ -325,7 +325,7 @@ pAOSO2_best_split_finder::pAOSO2_best_split_finder (const pAOSO2_best_split_find
   this->cb_split_ = f.cb_split_;
 }
 
-void pAOSO2_best_split_finder::operator() (const cv::BlockedRange &r)
+void pAOSO2_best_split_finder::operator() (const tbb::blocked_range<int> &r)
 {
 
   // for each variable, find the best split
@@ -649,11 +649,11 @@ bool pAOSO2Tree::find_best_candidate_split( pAOSO2Node* _node, pAOSO2Data* _data
 
   // the range (beginning/ending variable)
   int nsubvar = this->sub_fi_.size();
-  cv::BlockedRange br(0,nsubvar,1);
+  tbb::blocked_range<int> br(0,nsubvar,1);
 
   // do the search in parallel
   pAOSO2_best_split_finder bsf(this,_node,_data);
-  cv::parallel_reduce(br, bsf);
+  tbb::parallel_reduce(br, bsf);
 
   // update node's split
   _node->split_ = bsf.cb_split_;

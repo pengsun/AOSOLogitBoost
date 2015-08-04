@@ -1,5 +1,6 @@
 %%
-settings_par_labpc
+settings_p_opencv3
+% settings_par_labpc
 % settings_p
 % settings_server
 %%

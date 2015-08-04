@@ -1,7 +1,7 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pAOSO", "pAOSO.vcproj", "{65B0963B-2EDC-441C-81AD-43F5A4E8ED6B}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pAOSO", "pAOSO.vcxproj", "{65B0963B-2EDC-441C-81AD-43F5A4E8ED6B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

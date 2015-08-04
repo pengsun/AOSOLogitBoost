@@ -1,5 +1,5 @@
 %%
-settings_p
+settings_p_opencv3
 % settings_server
 %%
 name = 'pAOSOLogitBoost_mex';

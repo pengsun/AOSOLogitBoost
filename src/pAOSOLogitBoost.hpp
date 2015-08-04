@@ -6,7 +6,9 @@
 #include <list>
 #include <queue>
 #include <bitset>
-#include <opencv2/core/internal.hpp>
+
+#include "opencv2/core.hpp" 
+#include "tbb/tbb.h" // for parallel finding
 
 // data shared by tree and booster
 struct AOSODatagain {
@@ -97,9 +99,9 @@ struct best_split_finder {
   best_split_finder (AOSOTree *_tree, 
                      AOSONodegain* _node, AOSODatagain* _data,
                      int cls1, int cls2); // customized data
-  best_split_finder (const best_split_finder &f, cv::Split); // required
+  best_split_finder (const best_split_finder &f, tbb::split); // required
   
-  void operator () (const cv::BlockedRange &r); // required
+  void operator () (const tbb::blocked_range<int> &r); // required
   void join (best_split_finder &rhs); // required
 
   AOSOTree *tree_;

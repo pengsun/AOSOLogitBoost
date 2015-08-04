@@ -1,5 +1,6 @@
 %%
-settings
+settings_opencv3
+% settings
 % settings_server
 %%
 name = 'AOSOLogitBoost_mex';

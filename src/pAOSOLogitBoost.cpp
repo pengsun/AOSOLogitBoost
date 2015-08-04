@@ -233,7 +233,7 @@ best_split_finder::best_split_finder(AOSOTree *_tree, AOSONodegain *_node, AOSOD
   this->cb_split_.reset();
 }
 
-best_split_finder::best_split_finder (const best_split_finder &f, cv::Split)
+best_split_finder::best_split_finder (const best_split_finder &f, tbb::split)
 {
   this->tree_ = f.tree_;
   this->node_ = f.node_;
@@ -244,7 +244,7 @@ best_split_finder::best_split_finder (const best_split_finder &f, cv::Split)
   this->cb_split_ = f.cb_split_;
 }
 
-void best_split_finder::operator() (const cv::BlockedRange &r)
+void best_split_finder::operator() (const tbb::blocked_range<int> &r)
 {
 
   // for each variable, find the best split
@@ -419,11 +419,11 @@ bool AOSOTree::find_best_candidate_split( AOSONodegain* _node, AOSODatagain* _da
 
   // the range (beggining/ending variable)
   int nvar = data_cls->X.cols;
-  cv::BlockedRange br(0,nvar,1);
+  tbb::blocked_range<int> br(0,nvar,1);
 
   // do the search in parallel
   best_split_finder bsf(this,_node,_data, cls1,cls2);
-  cv::parallel_reduce(br, bsf);
+  tbb::parallel_reduce(br, bsf);
 
   // update node's split
   _node->split_ = bsf.cb_split_;

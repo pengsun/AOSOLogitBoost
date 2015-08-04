@@ -1,7 +1,7 @@
 #ifndef MLData_H_
 #define MLData_H_
 
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 
 enum VAR_TYPE
 {
